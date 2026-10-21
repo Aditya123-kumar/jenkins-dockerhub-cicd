@@ -27,6 +27,7 @@ pipeline {
             }
         }
 
+        
         stage('Login and Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
@@ -34,26 +35,31 @@ pipeline {
                     usernameVariable: 'DOCKERHUB_USER',
                     passwordVariable: 'DOCKERHUB_TOKEN'
                 )]) {
-                    bat '''
-                        @echo off
-                        if "%DOCKERHUB_USER%"=="" exit /b 1
-                        if "%DOCKERHUB_TOKEN%"=="" exit /b 1
-                        echo Attempting Docker Hub login...
-                        echo %DOCKERHUB_TOKEN% | docker login --username "%DOCKERHUB_USER%" --password-stdin
-                        if errorlevel 1 exit /b 1
-                        docker push %IMAGE_NAME%:%IMAGE_TAG%
+                    powershell '''
+                        $ErrorActionPreference = 'Stop'
+
+                        if ([string]::IsNullOrWhiteSpace($env:DOCKERHUB_USER)) {
+                            throw "Docker Hub username is empty"
+                        }
+
+                        if ([string]::IsNullOrWhiteSpace($env:DOCKERHUB_TOKEN)) {
+                            throw "Docker Hub token is empty in Jenkins credentials"
+                        }
+
+                        $env:DOCKERHUB_TOKEN |
+                            docker login --username $env:DOCKERHUB_USER --password-stdin
+
+                        if ($LASTEXITCODE -ne 0) {
+                            exit $LASTEXITCODE
+                        }
+
+                        docker push "$env:IMAGE_NAME`:$env:IMAGE_TAG"
+
+                        if ($LASTEXITCODE -ne 0) {
+                            exit $LASTEXITCODE
+                        }
                     '''
                 }
             }
         }
-    }
 
-    post {
-        success {
-            echo 'CI/CD pipeline completed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed. Check the stage logs.'
-        }
-    }
-}
