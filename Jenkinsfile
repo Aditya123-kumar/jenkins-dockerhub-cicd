@@ -35,22 +35,18 @@ pipeline {
                     passwordVariable: 'DOCKERHUB_TOKEN'
                 )]) {
                     bat '''
-                        @echo off
-                        echo %DOCKERHUB_TOKEN% | docker login -u "%DOCKERHUB_USER%" --password-stdin
-                        if errorlevel 1 exit /b 1
-                        docker push %IMAGE_NAME%:%IMAGE_TAG%
-                    '''
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            echo 'CI/CD pipeline completed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed. Check the stage logs.'
-        }
-    }
-}
+    @echo off
+    if "%DOCKERHUB_USER%"=="" (
+        echo ERROR: Docker Hub username is empty
+        exit /b 1
+    )
+    if "%DOCKERHUB_TOKEN%"=="" (
+        echo ERROR: Docker Hub token is empty
+        exit /b 1
+    )
+    echo Docker Hub username credential is present.
+    echo Attempting Docker Hub login...
+    echo %DOCKERHUB_TOKEN% | docker login --username "%DOCKERHUB_USER%" --password-stdin
+    if errorlevel 1 exit /b 1
+    docker push %IMAGE_NAME%:%IMAGE_TAG%
+'''
