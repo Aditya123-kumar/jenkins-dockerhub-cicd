@@ -27,7 +27,6 @@ pipeline {
             }
         }
 
-        
         stage('Login and Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
@@ -62,4 +61,14 @@ pipeline {
                 }
             }
         }
+    }
 
+    post {
+        success {
+            echo 'CI/CD pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Check the stage logs.'
+        }
+    }
+}
