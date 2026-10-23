@@ -1,0 +1,21 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dockerhub-app
+  namespace: dockerhub-demo
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dockerhub-app
+  template:
+    metadata:
+      labels:
+        app: dockerhub-app
+    spec:
+      containers:
+        - name: nginx-app
+          image: adityakumar0101/jenkins-dockerhub-cicd:v7
+          ports:
+            - containerPort: 80
